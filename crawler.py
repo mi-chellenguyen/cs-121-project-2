@@ -2,6 +2,9 @@ import logging
 import re
 from urllib.parse import urlparse
 from corpus import Corpus
+import os
+from lxml import html
+from urllib.parse import urljoin
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +30,11 @@ class Crawler:
 
             for next_link in self.extract_next_links(url_data):
                 if self.corpus.get_file_name(next_link) is not None:
+                    if not self.is_valid(next_link): 
+                        print("NOT VALID:",next_link) # to see which links are counted as "not valid"
                     if self.is_valid(next_link):
                         self.frontier.add_url(next_link)
-
+                        
     def fetch_url(self, url):
         """
         This method, using the given url, should find the corresponding file in the corpus and return a dictionary
@@ -43,8 +48,13 @@ class Crawler:
             "content": None,
             "size": 0
         }
+        
+        file_addr = self.corpus.get_file_name(url)
+        if file_addr:
+            url_data["content"] = html.parse(file_addr)  # or use html.tostring()? or html.fromstring()? not clear what to save content as (double check later)
+            url_data["size"] = os.stat(file_addr).st_size # obtain content size in bytes
         return url_data
-
+    
     def extract_next_links(self, url_data):
         """
         The url_data coming from the fetch_url method will be given as a parameter to this method. url_data contains the
@@ -56,6 +66,9 @@ class Crawler:
         Suggested library: lxml
         """
         outputLinks = []
+        for link in url_data["content"].xpath('//a/@href'):
+            abs_url = urljoin(url_data["url"], link) # do absolute url processing
+            outputLinks.append(abs_url)
         return outputLinks
 
     def is_valid(self, url):
@@ -67,6 +80,8 @@ class Crawler:
         parsed = urlparse(url)
         if parsed.scheme not in set(["http", "https"]):
             return False
+        # check for crawler traps here!
+        
         try:
             return ".ics.uci.edu" in parsed.hostname \
                    and not re.match(".*\.(css|js|bmp|gif|jpe?g|ico" + "|png|tiff?|mid|mp2|mp3|mp4" \
