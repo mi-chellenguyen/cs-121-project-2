@@ -78,9 +78,35 @@ class Crawler:
         in this method
         """
         parsed = urlparse(url)
+
+        
         if parsed.scheme not in set(["http", "https"]):
             return False
         # check for crawler traps here!
+
+        #check if url too long
+        if len(parsed.path) > 150:
+            return False
+
+        #calendar traps
+        if re.match("^.*calendar.*year=201[012345678].*$", parsed.query.lower()):
+            return False
+
+
+        #weird login that does not help with our exploration
+        if re.match("^.*do=login&sectok=.*$", parsed.query.lower()):
+            return False
+
+        #specific query trap
+        if re.match("^.*start\?do=.*type=sidebyside.*$", url.lower()):
+            return False
+
+        # Repeating directories trap
+        urlWords = url.split("/")
+        urlDict = Counter(urlWords)
+        for key in urlWords:
+            if urlDict[key] > 2:
+                return False
         
         try:
             return ".ics.uci.edu" in parsed.hostname \
