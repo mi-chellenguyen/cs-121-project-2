@@ -5,7 +5,6 @@ from corpus import Corpus
 import os
 from lxml import html
 from urllib.parse import urljoin
-
 logger = logging.getLogger(__name__)
 
 class Crawler:
@@ -51,7 +50,8 @@ class Crawler:
         
         file_addr = self.corpus.get_file_name(url)
         if file_addr:
-            url_data["content"] = html.parse(file_addr)  # or use html.tostring()? or html.fromstring()? not clear what to save content as (double check later)
+            tree = html.parse(file_addr)
+            url_data["content"] = html.tostring(tree)
             url_data["size"] = os.stat(file_addr).st_size # obtain content size in bytes
         return url_data
     
@@ -66,7 +66,7 @@ class Crawler:
         Suggested library: lxml
         """
         outputLinks = []
-        for link in url_data["content"].xpath('//a/@href'):
+        for link in html.fromstring(url_data["content"]).xpath('//a/@href'):
             abs_url = urljoin(url_data["url"], link) # do absolute url processing
             outputLinks.append(abs_url)
         return outputLinks

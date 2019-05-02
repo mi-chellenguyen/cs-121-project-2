@@ -1,7 +1,6 @@
-
+WEBPAGES_RAW/
 .project
 .pydevproject
 __pycache__/corpus.cpython-37.pyc
 __pycache__/crawler.cpython-37.pyc
 __pycache__/frontier.cpython-37.pyc
-WEBPAGES_RAW/
