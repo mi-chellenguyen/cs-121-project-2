@@ -20,8 +20,9 @@ class Crawler:
         self.corpus = Corpus()
         
         # analytics information
-        self.subdomains_visited = dict()
-        self.most_valid_outlinks = "" 
+        self.current_url = ""
+        self.subdomains_visited = dict() # key: subdomain, value: num of times visited
+        self.valid_outlinks = dict() # key: url, value: num of outputlinks
         self.traps_log = []
         self.downloaded_urls = []
 
@@ -44,6 +45,12 @@ class Crawler:
                     if self.is_valid(next_link):
                         self.frontier.add_url(next_link)
                         
+                        # increment num of valid outlinks for current url
+                        if not self.current_url in self.valid_outlinks:
+                            self.valid_outlinks[self.current_url] = 1
+                        else:
+                            self.valid_outlinks[self.current_url] += 1
+                            
                         # add url to downloaded urls for analytics 
                         self.downloaded_urls.append(next_link)
                         
@@ -67,6 +74,11 @@ class Crawler:
         subdomains_file = open("subdomains_log.txt","w+")
         for item in self.subdomains_visited.items():
             subdomains_file.write('{:25} count: {}\n'.format(item[0], str(item[1])))
+        
+        outlinks_file = open("valid_outlinks.txt","w+")
+        outlinks_file.write('MAX OUTLINKS: '+ str(max(self.valid_outlinks.values())) + ' FROM URL: '+ str(max(self.valid_outlinks, key=self.valid_outlinks.get)) + '\n')
+        for item in self.valid_outlinks.items():
+            outlinks_file.write('count: {:10}  url: {}\n'.format(item[1], str(item[0])))
             
     def fetch_url(self, url):
         """
@@ -100,9 +112,12 @@ class Crawler:
         Suggested library: lxml
         """
         outputLinks = []
+        self.current_url = url_data["url"] # for analytics on num of valid outlinks
+        
         for link in html.fromstring(url_data["content"]).xpath('//a/@href'):
             abs_url = urljoin(url_data["url"], link) # do absolute url processing
             outputLinks.append(abs_url)
+        
         return outputLinks
 
     def is_valid(self, url):
