@@ -74,7 +74,7 @@ class Crawler:
         outlinks_file = open("valid_outlinks.txt","w+")
         outlinks_file.write('MAX OUTLINKS: '+ str(max(self.valid_outlinks.values())) + ' FROM URL: '+ str(max(self.valid_outlinks, key=self.valid_outlinks.get)) + '\n')
         for item in self.valid_outlinks.items():
-            outlinks_file.write('count: {:10}  url: {}\n'.format(item[1], str(item[0])))
+            outlinks_file.write('num of outlinks: {:5}  url: {}\n'.format(item[1], str(item[0])))
             
     def fetch_url(self, url):
         """
