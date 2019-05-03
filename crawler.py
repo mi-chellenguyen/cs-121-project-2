@@ -38,10 +38,6 @@ class Crawler:
 
             for next_link in self.extract_next_links(url_data):
                 if self.corpus.get_file_name(next_link) is not None:
-                    if not self.is_valid(next_link): 
-                        # add url to list of traps for analytics
-                         self.traps_log.append(next_link)
-                         
                     if self.is_valid(next_link):
                         self.frontier.add_url(next_link)
                         
@@ -127,7 +123,7 @@ class Crawler:
         in this method
         """
         parsed = urlparse(url)
-
+        
         
         if parsed.scheme not in set(["http", "https"]):
             return False
@@ -135,20 +131,27 @@ class Crawler:
 
         #check if url too long
         if len(parsed.path) > 150:
+            # add url to list of traps for analytics
+            self.traps_log.append(url + "\tType: url too long")
             return False
 
         #calendar traps
         if re.match("^.*calendar.*year=201[012345678].*$", parsed.query.lower()):
-        #if re.match("^.*calendar.*year=203.*$", parsed.query.lower()):
+            # add url to list of traps for analytics
+            self.traps_log.append(url + "\tType: calendar")
             return False
 
 
         #weird login that does not help with our exploration
         if re.match("^.*do=login&sectok=.*$", parsed.query.lower()):
+             # add url to list of traps for analytics
+            self.traps_log.append(url + "\tType: login form")
             return False
 
         #specific query trap
         if re.match("^.*start\?do=.*type=sidebyside.*$", url.lower()):
+             # add url to list of traps for analytics
+            self.traps_log.append(url + "\tType: specific trap")
             return False
 
         # Repeating directories trap
@@ -156,6 +159,8 @@ class Crawler:
         urlDict = Counter(urlWords)
         for key in urlWords:
             if urlDict[key] > 2:
+                # add url to list of traps for analytics
+                self.traps_log.append(url + "\tType: repeating dictionaries")
                 return False
         
         try:
