@@ -5,6 +5,8 @@ from corpus import Corpus
 import os
 from lxml import html
 from urllib.parse import urljoin
+from collections import Counter
+import tldextract
 logger = logging.getLogger(__name__)
 
 class Crawler:
@@ -16,6 +18,12 @@ class Crawler:
     def __init__(self, frontier):
         self.frontier = frontier
         self.corpus = Corpus()
+        
+        # analytics information
+        self.subdomains_visited = dict()
+        self.most_valid_outlinks = "" 
+        self.traps_log = []
+        self.downloaded_urls = []
 
     def start_crawling(self):
         """
@@ -30,10 +38,36 @@ class Crawler:
             for next_link in self.extract_next_links(url_data):
                 if self.corpus.get_file_name(next_link) is not None:
                     if not self.is_valid(next_link): 
-                        print("NOT VALID:",next_link) # to see which links are counted as "not valid"
+                        # add url to list of traps for analytics
+                         self.traps_log.append(next_link)
+                         
                     if self.is_valid(next_link):
                         self.frontier.add_url(next_link)
                         
+                        # add url to downloaded urls for analytics 
+                        self.downloaded_urls.append(next_link)
+                        
+                        # find subdomain of url and add to analytics 
+                        extracted_link = tldextract.extract(next_link)
+                        if not extracted_link.subdomain in self.subdomains_visited:
+                            self.subdomains_visited[extracted_link.subdomain] = 1
+                        else:
+                            self.subdomains_visited[extracted_link.subdomain] += 1
+                            
+        
+        # store analytics data to files
+        downloaded_urls_file = open("downloaded_urls.txt","w+")
+        for url in self.downloaded_urls:
+            downloaded_urls_file.write(url + '\n')
+            
+        traps_file = open("traps_log.txt","w+")
+        for url in self.traps_log:
+            traps_file.write(url + '\n')
+            
+        subdomains_file = open("subdomains_log.txt","w+")
+        for item in self.subdomains_visited.items():
+            subdomains_file.write('{:25} count: {}\n'.format(item[0], str(item[1])))
+            
     def fetch_url(self, url):
         """
         This method, using the given url, should find the corresponding file in the corpus and return a dictionary
@@ -90,6 +124,7 @@ class Crawler:
 
         #calendar traps
         if re.match("^.*calendar.*year=201[012345678].*$", parsed.query.lower()):
+        #if re.match("^.*calendar.*year=203.*$", parsed.query.lower()):
             return False
 
 
