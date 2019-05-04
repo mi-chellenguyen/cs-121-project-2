@@ -20,7 +20,6 @@ class Crawler:
         self.corpus = Corpus()
         
         # analytics information
-        self.current_url = ""
         self.subdomains_visited = dict() # key: subdomain, value: num of times visited
         self.valid_outlinks = dict() # key: url, value: num of outputlinks
         self.traps_log = []
@@ -40,12 +39,11 @@ class Crawler:
                 if self.corpus.get_file_name(next_link) is not None:
                     if self.is_valid(next_link):
                         self.frontier.add_url(next_link)
-                        
                         # increment num of valid outlinks for current url
-                        if not self.current_url in self.valid_outlinks:
-                            self.valid_outlinks[self.current_url] = 1
+                        if not url in self.valid_outlinks:
+                            self.valid_outlinks[url] = 1
                         else:
-                            self.valid_outlinks[self.current_url] += 1
+                            self.valid_outlinks[url] += 1
                             
                         # add url to downloaded urls for analytics 
                         self.downloaded_urls.append(next_link)
@@ -124,44 +122,8 @@ class Crawler:
         """
         parsed = urlparse(url)
         
-        
         if parsed.scheme not in set(["http", "https"]):
             return False
-        # check for crawler traps here!
-
-        #check if url too long
-        if len(parsed.path) > 150:
-            # add url to list of traps for analytics
-            self.traps_log.append(url + "\tType: url too long")
-            return False
-
-        #calendar traps
-        if re.match("^.*calendar.*year=201[012345678].*$", parsed.query.lower()):
-            # add url to list of traps for analytics
-            self.traps_log.append(url + "\tType: calendar")
-            return False
-
-
-        #weird login that does not help with our exploration
-        if re.match("^.*do=login&sectok=.*$", parsed.query.lower()):
-             # add url to list of traps for analytics
-            self.traps_log.append(url + "\tType: login form")
-            return False
-
-        #specific query trap
-        if re.match("^.*start\?do=.*type=sidebyside.*$", url.lower()):
-             # add url to list of traps for analytics
-            self.traps_log.append(url + "\tType: specific trap")
-            return False
-
-        # Repeating directories trap
-        urlWords = url.split("/")
-        urlDict = Counter(urlWords)
-        for key in urlWords:
-            if urlDict[key] > 2:
-                # add url to list of traps for analytics
-                self.traps_log.append(url + "\tType: repeating dictionaries")
-                return False
         
         try:
             return ".ics.uci.edu" in parsed.hostname \
@@ -174,4 +136,40 @@ class Crawler:
         except TypeError:
             print("TypeError for ", parsed)
             return False
+        
+        # check for crawler traps here!
+        finally:
+            #check if url too long
+            if len(parsed.path) > 150:
+                # add url to list of traps for analytics
+                self.traps_log.append(url + "\tType: url too long")
+                return False
+      
+            #calendar traps
+            if re.match("^.*calendar.*year=201[012345678].*$", parsed.query.lower()):
+                # add url to list of traps for analytics
+                self.traps_log.append(url + "\tType: calendar")
+                return False
+      
+      
+            #weird login that does not help with our exploration
+            if re.match("^.*do=login&sectok=.*$", parsed.query.lower()):
+                 # add url to list of traps for analytics
+                self.traps_log.append(url + "\tType: login form")
+                return False
+     
+            #specific query trap
+            if re.match("^.*start\?do=.*type=sidebyside.*$", url.lower()):
+                 # add url to list of traps for analytics
+                self.traps_log.append(url + "\tType: specific trap")
+                return False
+    
+            # Repeating directories trap
+            urlWords = url.split("/")
+            urlDict = Counter(urlWords)
+            for key in urlWords:
+                if urlDict[key] > 2:
+                    # add url to list of traps for analytics
+                    self.traps_log.append(url + "\tType: repeating dictionaries")
+                    return False
 
