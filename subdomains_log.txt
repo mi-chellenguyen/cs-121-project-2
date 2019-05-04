@@ -1,7 +1,7 @@
-www.ics                   count: 39204
-calendar.ics              count: 804
+www.ics                   count: 39360
+calendar.ics              count: 832
 support.ics               count: 2
-duttgroup.ics             count: 144212
+duttgroup.ics             count: 3059
 wildhog.ics               count: 8
 vision.ics                count: 1116
 ngs.ics                   count: 4
@@ -17,7 +17,7 @@ omni.ics                  count: 1
 cocoa-krispies.ics        count: 1
 sconce.ics                count: 8
 sprout.ics                count: 4
-cbcl.ics                  count: 5568
+cbcl.ics                  count: 10864
 mondego.ics               count: 17
 isg.ics                   count: 244
 graphics.ics              count: 159

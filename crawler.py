@@ -152,26 +152,21 @@ class Crawler:
             if re.match("^.*calendar.*day.*month.*year=201[012345678].*$", parsed.query.lower()):
                 # add url to list of traps for analytics
                 self.traps_log.append(url + "\tType: calendar")
-                
                 return False
-      
-      
+         
             # dynamic pages such as login
             if re.match("^.*do=login&sectok=.*$", parsed.query.lower()):
                  # add url to list of traps for analytics
                 self.traps_log.append(url + "\tType: login form")
                 p_query = parse_qs(parsed.query)
-                print()
                 return False
-
-     
+    
             #images that linked to the same results
             if re.match("^.*?image=.*(jpg|png|jpeg|pdf).*media.*$",parsed.query.lower()):
-                return False
                  # add url to list of traps for analytics
                 self.traps_log.append(url + "\tType: image pages")
                 return False
-    
+     
             # Repeating directories trap
             urlWords = url.split("/")
             urlDict = Counter(urlWords)
