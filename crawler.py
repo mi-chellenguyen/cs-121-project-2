@@ -5,6 +5,7 @@ from corpus import Corpus
 import os
 from lxml import html
 from urllib.parse import urljoin
+from urllib.parse import parse_qs
 from collections import Counter
 import tldextract
 logger = logging.getLogger(__name__)
@@ -23,7 +24,8 @@ class Crawler:
         self.subdomains_visited = dict() # key: subdomain, value: num of times visited
         self.valid_outlinks = dict() # key: url, value: num of outputlinks
         self.traps_log = []
-        self.downloaded_urls = []
+        self.downloaded_urls = set()
+        self.prev_calendar = dict()
 
     def start_crawling(self):
         """
@@ -46,7 +48,7 @@ class Crawler:
                             self.valid_outlinks[url] += 1
                             
                         # add url to downloaded urls for analytics 
-                        self.downloaded_urls.append(next_link)
+                        self.downloaded_urls.add(next_link)
                         
                         # find subdomain of url and add to analytics 
                         extracted_link = tldextract.extract(next_link)
@@ -58,6 +60,7 @@ class Crawler:
         
         # store analytics data to files
         downloaded_urls_file = open("downloaded_urls.txt","w+")
+        downloaded_urls_file.write("num of valid urls: " + str(len(self.downloaded_urls)) + '\n')
         for url in self.downloaded_urls:
             downloaded_urls_file.write(url + '\n')
             
@@ -140,28 +143,33 @@ class Crawler:
         # check for crawler traps here!
         finally:
             #check if url too long
-            if len(parsed.path) > 150:
+            if len(parsed.path) > 200:
                 # add url to list of traps for analytics
                 self.traps_log.append(url + "\tType: url too long")
                 return False
       
             #calendar traps
-            if re.match("^.*calendar.*year=201[012345678].*$", parsed.query.lower()):
+            if re.match("^.*calendar.*day.*month.*year=201[012345678].*$", parsed.query.lower()):
                 # add url to list of traps for analytics
                 self.traps_log.append(url + "\tType: calendar")
+                
                 return False
       
       
-            #weird login that does not help with our exploration
+            # dynamic pages such as login
             if re.match("^.*do=login&sectok=.*$", parsed.query.lower()):
                  # add url to list of traps for analytics
                 self.traps_log.append(url + "\tType: login form")
+                p_query = parse_qs(parsed.query)
+                print()
                 return False
+
      
-            #specific query trap
-            if re.match("^.*start\?do=.*type=sidebyside.*$", url.lower()):
+            #images that linked to the same results
+            if re.match("^.*?image=.*(jpg|png|jpeg|pdf).*media.*$",parsed.query.lower()):
+                return False
                  # add url to list of traps for analytics
-                self.traps_log.append(url + "\tType: specific trap")
+                self.traps_log.append(url + "\tType: image pages")
                 return False
     
             # Repeating directories trap
@@ -172,4 +180,6 @@ class Crawler:
                     # add url to list of traps for analytics
                     self.traps_log.append(url + "\tType: repeating dictionaries")
                     return False
+
+            
 
